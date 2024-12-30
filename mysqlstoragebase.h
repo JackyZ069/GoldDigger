@@ -22,7 +22,7 @@ public:
 public:
     //连接数据库
     bool connectDatabase(const QString &address = "localhost", const int &port = 3306,const QString &dbName = "stockDB",
-                         const QString &dbUser = "root", const QString &dbPassWord = "mp112233");
+                         const QString &dbUser = "root", const QString &dbPassWord = "mp112233", const QString &ConnectName = "mainThread");
     //打开表格
     bool openTable(const QString& tableName = "stock_base_table");
     //打开股票基础表
@@ -33,6 +33,10 @@ public:
     bool InsertStockBaseTable(QStringList &dataList);
     //判断表是否打开
     bool isTableVaild();
+    //数据库记录条数
+    int showRecords();
+    //获取当前记录的股票价格
+    double getDoubleDataFromDB(const QString &fieldName);
 
 private:
     //数据库

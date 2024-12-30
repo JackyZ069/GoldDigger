@@ -1,6 +1,7 @@
 #include "mysqlstoragebase.h"
 #include <QSqlQuery>
 #include <QDateTime>
+#include <QSqlRecord>
 
 mysqlStorageBase::mysqlStorageBase() {}
 
@@ -18,10 +19,10 @@ mysqlStorage::~mysqlStorage()
 
 }
 
-bool mysqlStorage::connectDatabase(const QString &address, const int &port, const QString &dbName, const QString &dbUser, const QString &dbPassWord)
+bool mysqlStorage::connectDatabase(const QString &address, const int &port, const QString &dbName, const QString &dbUser, const QString &dbPassWord, const QString &connectName)
 {
     //add a database driver
-    DB = QSqlDatabase::addDatabase("QMYSQL");
+    DB = QSqlDatabase::addDatabase("QMYSQL",connectName);
     //set database info
     DB.setHostName(address); // 对于远程数据库，设置主机名或IP
     DB.setPort(port);
@@ -66,16 +67,14 @@ bool mysqlStorage::openStockBaseTable()
         return false;
 
     return true;
-    // showRecordCounts();
-    // connect(selectModel,&QItemSelectionModel::currentChanged,this,&MainWindow::do_currentChanged);
-    // connect(selectModel,&QItemSelectionModel::currentRowChanged,this,&MainWindow::do_currentRowChanged);
 }
 
 bool mysqlStorage::creatStockBaseTable()
 {
     QSqlQuery query(DB);
     query.exec("CREATE TABLE  IF NOT EXISTS stock_base_table("
-               "stockCode INT PRIMARY KEY,"
+               "id INT AUTO_INCREMENT PRIMARY KEY,"
+               "stockCode INT NOT NULL,"
                "stockName VARCHAR(50) NOT NULL,"
                "stockCurrPrice DOUBLE NOT NULL,"
                "currentTime DATETIME NOT NULL,"
@@ -160,7 +159,7 @@ bool mysqlStorage::InsertStockBaseTable(QStringList &dataList)
         return false;
 
     //create a query
-    QSqlQuery query;
+    QSqlQuery query(DB);
     //此处使用占位符的作用是：使用占位符和bindValue方法是一种更安全、更清晰和更易于维护的方式来执行SQL插入操作。这种方式可以帮助你避免SQL注入攻击，提高代码的可读性和可维护性，并且在某些情况下还可以提高性能。
     query.prepare("INSERT INTO stock_base_table (stockCode, stockName, stockCurrPrice, currentTime, riseFallPrice, riseFallPercent, "
                     "stockClosingPrice, stockOpeningPrice, currTopPrice, currBottomPrice, maybeTopPrice, maybeBottomPrice)"
@@ -207,6 +206,26 @@ bool mysqlStorage::isTableVaild()
         return true;
     else
         return false;
+}
+
+int mysqlStorage::showRecords()
+{
+    if(!tabModel)
+        return 0;
+    tabModel->select();
+    return tabModel->rowCount()-1;
+
+}
+
+double mysqlStorage::getDoubleDataFromDB(const QString &fieldName)
+{
+    if(!tabModel)
+        return 0;
+
+    QSqlRecord record = tabModel->record(tabModel->rowCount()-1);
+
+    double result = record.field(fieldName).value().toDouble();
+    return result;
 }
 
 

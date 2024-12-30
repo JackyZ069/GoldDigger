@@ -11,12 +11,13 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    mysql = new mysqlStorage();
+    m_mysql = new mysqlStorage();
     ui->databaseAddress->setText("localhost");
     ui->databasePort->setText("3306");
     ui->databaseName->setText("stockDB");
     ui->databaseUserName->setText("root");
     ui->databasePassword->setText("mp112233");
+
 }
 
 MainWindow::~MainWindow()
@@ -52,46 +53,10 @@ void MainWindow::onRequestFinished(QNetworkReply *reply)
     reply->deleteLater();
 }
 
-
-void MainWindow::on_pushButtonConfrim_clicked()
-{
-    if(ui->stockCodeLineEdit->text().isEmpty())
-        return;
-    else
-    {
-        ui->textEdit->clear();
-        ///调用 python脚本
-        QProcess process;
-        // process.setEnvironment(QProcess::systemEnvironment());
-        // process.setProcessEnvironment(QProcessEnvironment::systemEnvironment());
-        // process.setProcessChannelMode(QProcess::MergedChannels);
-        process.start("/Users/jackyz/PythonProject/.venv/bin/python", QStringList() << "/Users/jackyz/PythonProject/stockInfo.py" << ui->stockCodeLineEdit->text());
-
-        if (!process.waitForFinished()) {
-            qDebug() << "进程执行失败";
-            return;
-        }
-
-        QByteArray output = process.readAllStandardOutput();
-        //QByteArray errorOutput = process.readAllStandardError();
-        //qDebug() << "Python脚本返回值:" <<QString::fromUtf8(output.trimmed());
-        //qDebug() << "Python脚本错误信息:" << errorOutput.trimmed();
-
-        //切割获得的数据；
-        QStringList outputStrList = QString(output).split('~');
-        int size = outputStrList.size();
-        ui->textEdit->setText(QString::fromUtf8(output.trimmed()));
-        if(mysql->isTableVaild())
-            mysql->InsertStockBaseTable(outputStrList);
-    }
-}
-
-
-
 void MainWindow::on_connectDataBaseBtn_clicked()
 {
     //打开数据库
-    bool b = mysql->connectDatabase(ui->databaseAddress->text(),ui->databasePort->text().toInt(),ui->databaseName->text(),ui->databaseUserName->text(),ui->databasePassword->text());
+    bool b = m_mysql->connectDatabase(ui->databaseAddress->text(),ui->databasePort->text().toInt(),ui->databaseName->text(),ui->databaseUserName->text(),ui->databasePassword->text());
     if(!b)
     {
         QMessageBox::warning(this,"error","open database error,please check!");
@@ -99,14 +64,14 @@ void MainWindow::on_connectDataBaseBtn_clicked()
     }
     ui->databaseStatu->setText("数据库连接成功！");
     //创建表格
-    b = mysql->creatStockBaseTable();
+    b = m_mysql->creatStockBaseTable();
     if(!b)
     {
         QMessageBox::warning(this,"error","creat table error,please check!");
         return;
     }
     //打开表格
-    b = mysql->openStockBaseTable();
+    b = m_mysql->openStockBaseTable();
     if(!b)
     {
         QMessageBox::warning(this,"error","open table error,please check!");
@@ -116,4 +81,38 @@ void MainWindow::on_connectDataBaseBtn_clicked()
 
 }
 
+void MainWindow::on_stockConnectBtn_clicked()
+{
+    QString stockNum = ui->stockCodeLineEdit->text();
+    if(stockNum.isEmpty())
+        return;
+
+    ui->stockCancelBtn->setText("获取数据中...");
+
+    m_StockThread = new getStockWorkThread(stockNum,ui->databaseAddress->text(),ui->databasePort->text().toInt(),ui->databaseName->text(),ui->databaseUserName->text(),ui->databasePassword->text());
+    m_StockThread->start();
+
+    connect(m_StockThread,&getStockWorkThread::workDoneOneTime,this,&MainWindow::stock_work_done);
+}
+
+
+void MainWindow::on_stockCancelBtn_clicked()
+{
+
+}
+
+void MainWindow::stock_work_done()
+{
+    ui->databaseRecord->setText(QString("数据库记录条数：%1").arg(m_mysql->showRecords()));
+    double currStockPrice = m_mysql->getDoubleDataFromDB("stockCurrPrice");
+    QFont font = ui->StockCurrPriceLabel->font();
+    font.setPointSize(20);
+    ui->StockCurrPriceLabel->setFont(font);
+    if(m_mysql->getDoubleDataFromDB("riseFallPrice")>0)
+        ui->StockCurrPriceLabel->setStyleSheet("color:red;");
+    else
+        ui->StockCurrPriceLabel->setStyleSheet("color:green;");
+    ui->StockCurrPriceLabel->setText(QString::number(currStockPrice));
+
+}
 
