@@ -31,6 +31,10 @@ private slots:
 
     void stock_work_done();
 
+    void on_stackDataBaseBtn_clicked();
+
+    void on_stackStockBtn_clicked();
+
 private:
     Ui::MainWindow *ui;
     mysqlStorage *m_mysql;

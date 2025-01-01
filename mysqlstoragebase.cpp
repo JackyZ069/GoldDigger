@@ -151,7 +151,8 @@ bool mysqlStorage::InsertStockBaseTable(QStringList &dataList)
     //               48	4.97	    跌停价
     //               49	2.41	    量比
     //               50	-621	    委差
-    //               51	5.61	    未知
+    //               51	5.61	    未知+
+
     //               52	9.88	    市盈率(动)
     //               53	15.93	    市盈率(静)
 

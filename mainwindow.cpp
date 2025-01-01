@@ -116,3 +116,15 @@ void MainWindow::stock_work_done()
 
 }
 
+
+void MainWindow::on_stackDataBaseBtn_clicked()
+{
+    ui->mainStackedWidget->setCurrentIndex(0);
+}
+
+
+void MainWindow::on_stackStockBtn_clicked()
+{
+    ui->mainStackedWidget->setCurrentIndex(1);
+}
+
