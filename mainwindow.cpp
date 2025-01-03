@@ -77,7 +77,7 @@ void MainWindow::on_connectDataBaseBtn_clicked()
         QMessageBox::warning(this,"error","open table error,please check!");
         return;
     }
-    //获取数据
+    ui->mainStackedWidget->setCurrentIndex(1);
 
 }
 
