@@ -35,7 +35,7 @@ public:
     bool isTableVaild();
     //数据库记录条数
     int showRecords();
-    //获取当前记录的股票价格
+    //获取当前记录的DOUBLE类型数据（股票价格）
     double getDoubleDataFromDB(const QString &fieldName);
 
 private:

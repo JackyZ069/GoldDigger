@@ -4,6 +4,7 @@
 #include <QProcess>
 #include <QDebug>
 #include <QMessageBox>
+#include <QtCharts>
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -11,12 +12,16 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    //初始化数据库
     m_mysql = new mysqlStorage();
     ui->databaseAddress->setText("localhost");
     ui->databasePort->setText("3306");
     ui->databaseName->setText("stockDB");
     ui->databaseUserName->setText("root");
     ui->databasePassword->setText("mp112233");
+    //初始化图表
+    creatChart();
+    ui->mainStackedWidget->setCurrentIndex(0);
 
 }
 
@@ -93,6 +98,7 @@ void MainWindow::on_stockConnectBtn_clicked()
     m_StockThread->start();
 
     connect(m_StockThread,&getStockWorkThread::workDoneOneTime,this,&MainWindow::stock_work_done);
+    initChart();
 }
 
 
@@ -127,4 +133,57 @@ void MainWindow::on_stackStockBtn_clicked()
 {
     ui->mainStackedWidget->setCurrentIndex(1);
 }
+
+void MainWindow::creatChart()
+{
+    m_stockChartView = new QChartView(ui->widget);
+    m_stockChartView->resize(ui->widget->width(),ui->widget->height());
+    QChart *chart = new QChart();
+    chart->setTitle("当前股票行情");
+    m_stockChartView->setChart(chart);
+
+}
+
+void MainWindow::initChart()
+{
+    int timeout = 0;
+    bool isSameCode = false;
+    while(timeout == 5)
+    {
+        int dbStockCode = m_mysql->getDoubleDataFromDB("stockCode");
+        if(dbStockCode==ui->stockCodeLineEdit->text().toInt())
+        {
+            isSameCode = true;
+            break;
+        }
+        timeout++;
+    }
+
+    if(isSameCode)
+    {
+        QChart *chart = m_stockChartView->chart();
+        //创建坐标轴
+        QDateTimeAxis *axisX = new QDateTimeAxis();
+        axisX->setFormat("hh.mm.ss");
+        axisX->setTitleText("时间");
+        //此处设置x轴范围可以用qtdatatime的fromstring函数
+        axisX->setRange(QDateTime::fromString("09:30:00", "hh:mm:ss"),QDateTime::fromString("15:00:00", "hh:mm:ss"));
+        QValueAxis *axisY = new QValueAxis();
+        //上限使用开盘价/收盘价的1.2倍
+        double stdPrice = m_mysql->getDoubleDataFromDB("stockOpeningPrice");
+        if(stdPrice == 0)
+            stdPrice = m_mysql->getDoubleDataFromDB("stockClosingPrice");
+        double maxY = stdPrice * 1.2;
+        double minY = stdPrice * 0.8;
+        axisY->setRange(minY, maxY);
+
+    }
+    else
+    {
+        QMessageBox::warning(this,"error","数据库股票代码和输入代码不一致，可能是网络出现问题，请排查！");
+    }
+
+}
+
+
 

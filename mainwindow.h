@@ -5,7 +5,7 @@
 #include "stockinfogetterbase.h"
 #include "mysqlstoragebase.h"
 #include "work_thread_base.h"
-
+#include <QtCharts>
 QT_BEGIN_NAMESPACE
 namespace Ui {
 class MainWindow;
@@ -36,8 +36,14 @@ private slots:
     void on_stackStockBtn_clicked();
 
 private:
+    void creatChart();
+    void initChart();
+
+private:
     Ui::MainWindow *ui;
     mysqlStorage *m_mysql;
     getStockWorkThread *m_StockThread;
+    QChartView *m_stockChartView;
+    QStringList m_lastData;
 };
 #endif // MAINWINDOW_H

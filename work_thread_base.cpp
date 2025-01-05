@@ -1,5 +1,7 @@
 #include "work_thread_base.h"
 #include <QProcess>
+#include <QTime>
+
 work_thread_base::work_thread_base() {}
 
 work_thread_base::~work_thread_base()
@@ -62,7 +64,15 @@ void getStockWorkThread::run()
 
         //发出信号后休眠
         emit workDoneOneTime();
-        msleep(888);
+        //股票数据基本上是3s更新一次
+        msleep(1888);
+
+        // 获取当前时间
+        QTime currentTime = QTime::currentTime();
+
+        // 直接比较当前时间和15点
+        if (currentTime > QTime(15, 0, 0))
+            m_stop = true;
     }
     return;
 }
