@@ -229,4 +229,16 @@ double mysqlStorage::getDoubleDataFromDB(const QString &fieldName)
     return result;
 }
 
+QDateTime mysqlStorage::getDateTimeDataFromDB()
+{
+    QDateTime dateTime;
+    if(!tabModel)
+        return dateTime;
+    QSqlRecord record = tabModel->record(tabModel->rowCount()-1);
+    dateTime = record.field("currentTime").value().toDateTime();
+    //此处重置为只有时分秒的datetime
+    dateTime = QDateTime(QDate(1970,1,1),dateTime.time());
+    return dateTime;
+}
+
 

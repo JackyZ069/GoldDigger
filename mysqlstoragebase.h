@@ -37,6 +37,8 @@ public:
     int showRecords();
     //获取当前记录的DOUBLE类型数据（股票价格）
     double getDoubleDataFromDB(const QString &fieldName);
+    //获取当前记录的DATETIME类型数据
+    QDateTime getDateTimeDataFromDB();
 
 private:
     //数据库

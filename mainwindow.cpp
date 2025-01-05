@@ -97,6 +97,7 @@ void MainWindow::on_stockConnectBtn_clicked()
     m_StockThread = new getStockWorkThread(stockNum,ui->databaseAddress->text(),ui->databasePort->text().toInt(),ui->databaseName->text(),ui->databaseUserName->text(),ui->databasePassword->text());
     m_StockThread->start();
 
+    //每一次查询后回到workdone处理
     connect(m_StockThread,&getStockWorkThread::workDoneOneTime,this,&MainWindow::stock_work_done);
     initChart();
 }
@@ -120,6 +121,21 @@ void MainWindow::stock_work_done()
         ui->StockCurrPriceLabel->setStyleSheet("color:green;");
     ui->StockCurrPriceLabel->setText(QString::number(currStockPrice));
 
+    //
+    QChart *chart = m_stockChartView->chart();
+    // 获取第一个系列并尝试转换为QLineSeries
+    QAbstractSeries *abstractSeries = chart->series().at(0);
+    QLineSeries *stockSeries = qobject_cast<QLineSeries *>(abstractSeries);
+
+    if(stockSeries)
+    {
+        double currPrice = m_mysql->getDoubleDataFromDB("stockCurrPrice");
+        QDateTime dateTime = m_mysql->getDateTimeDataFromDB();
+        QPointF point(dateTime.toMSecsSinceEpoch(),currPrice);
+        stockSeries->append(point);//append用于添加点
+        m_stockChartView->update();
+    }
+
 }
 
 
@@ -141,14 +157,14 @@ void MainWindow::creatChart()
     QChart *chart = new QChart();
     chart->setTitle("当前股票行情");
     m_stockChartView->setChart(chart);
-
+    m_stockChartView->show();
 }
 
 void MainWindow::initChart()
 {
     int timeout = 0;
     bool isSameCode = false;
-    while(timeout == 5)
+    while(timeout != 5)
     {
         int dbStockCode = m_mysql->getDoubleDataFromDB("stockCode");
         if(dbStockCode==ui->stockCodeLineEdit->text().toInt())
@@ -176,7 +192,17 @@ void MainWindow::initChart()
         double maxY = stdPrice * 1.2;
         double minY = stdPrice * 0.8;
         axisY->setRange(minY, maxY);
-
+        chart->addAxis(axisX,Qt::AlignBottom);
+        chart->addAxis(axisY,Qt::AlignLeft);
+        QLineSeries *stockSeries = new QLineSeries();
+        stockSeries->setName("行情");
+        chart->addSeries(stockSeries);
+        double currPrice = m_mysql->getDoubleDataFromDB("stockCurrPrice");
+        QDateTime dateTime = m_mysql->getDateTimeDataFromDB();
+        QPointF point(dateTime.toMSecsSinceEpoch(),currPrice);
+        stockSeries->append(point);//append用于添加点
+        stockSeries->attachAxis(axisX);//attach用于附加到坐标轴上
+        stockSeries->attachAxis(axisY);
     }
     else
     {

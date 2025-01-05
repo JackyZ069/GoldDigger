@@ -29,6 +29,7 @@ private slots:
 
     void on_stockCancelBtn_clicked();
 
+    //每一次股票线程完成后会回到这里
     void stock_work_done();
 
     void on_stackDataBaseBtn_clicked();
